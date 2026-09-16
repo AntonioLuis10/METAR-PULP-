@@ -311,17 +311,17 @@ if ciudad:
             ### 3. Visibilidad Horizontal y Régimen CAVOK
             * **`9999`**: Visibilidad horizontal igual o superior a 10 km.
             * **`0000`**: Visibilidad extrema inferior a 50 metros.
-            * **`CAVOK`** (*Ceiling And Visibility OK*): Sustituye visibilidad, tiempo presente y nubes cuando concurrentemente hay $\ge 10\text{ km}$ de visibilidad, sin nubes por debajo de 5000 ft AGL y sin fenómenos significativos.
+            * **`CAVOK`** (*Ceiling And Visibility OK*): Sustituye visibilidad, tiempo presente y nubes cuando concurrentemente hay 10 km o más de visibilidad, sin nubes por debajo de 5000 ft sobre el suelo y sin fenómenos significativos.
 
             ### 4. Fenómenos Meteorológicos y Precipitaciones
             * **Intensidad**: `-` (Ligera/Débil), *Sin signo* (Moderada), `+` (Fuerte/Severa).
             * **Descriptores**: `SH` (Chubascos convectivos), `FZ` (Engelante / sobreenfriado), `TS` (Tormenta eléctrica).
             * **Hidrometeoros**: `RA` (Lluvia), `DZ` (Llovizna), `SN` (Nieve), `SG` (Cinarra o granos de nieve), `GR` (Granizo grueso).
-            * **Litometeoros / Visibilidad reducida**: `FG` (Niebla, visibilidad $< 1000\text{ m}$), `BR` (Neblina), `HZ` (Calima).
+            * **Litometeoros / Visibilidad reducida**: `FG` (Niebla, visibilidad menor a 1000 m), `BR` (Neblina), `HZ` (Calima).
             * *Ejemplos combinados*: `-RA` (Lluvia débil), `TSRA` (Tormenta con lluvia), `+SHSN` (Chubasco de nieve fuerte).
 
             ### 5. Cobertura y Techo de Nubes (Octas)
-            * **NSC**: *Nil Significant Clouds* (sin nubes operativamente significativas por debajo de 5000 ft).
+            * **NSC**: *Nil Significant Clouds* (sin nubes significativas por debajo de 5000 ft).
             * **FEW**: Escasa (1 a 2 octas de cielo cubierto).
             * **SCT**: Dispersa (3 a 4 octas).
             * **BKN**: Fragmentada (5 a 7 octas). **Constituye legalmente techo de nubes operativo**.
@@ -330,7 +330,7 @@ if ciudad:
               *(Ejemplo: `BKN024` = Techo fragmentado a 2400 ft sobre el suelo).*
 
             ### 6. Parámetros Termodinámicos y Altimetría
-            * **`TT/TdTd`**: Temperatura ambiental (`TT`) y punto de rocío (`TdTd`) en grados Celsius. La letra `M` indica signo negativo *(ejemplo: `M02/M05` = $-2^\circ\text{C}$ / $-5^\circ\text{C}$)*.
+            * **`TT/TdTd`**: Temperatura ambiental (`TT`) y punto de rocío (`TdTd`) en grados Celsius. La letra `M` indica signo negativo *(ejemplo: `M02/M05` = -2°C / -5°C)*.
             * **`Qxxxx`**: Presión barométrica **QNH** reducida al nivel del mar bajo la atmósfera ISA expresada en hectopascales (hPa).
 
             ### 7. Grupos de Evolución en Pronósticos TAF
