@@ -265,7 +265,19 @@ if ciudad:
         m1, m2, m3, m4 = st.columns(4)
         
         with m1:
-            st.metric("Viento", f"{wind_speed_kt} kt")
+            # Selector de unidad (kt / km/h)
+            unidad_viento = st.radio(
+                "Unidad",
+                options=["kt", "km/h"],
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+            if unidad_viento == "km/h":
+                vel_kmh = int(round(wind_speed_kt * 1.852))
+                st.metric("Viento", f"{vel_kmh} km/h")
+            else:
+                st.metric("Viento", f"{wind_speed_kt} kt")
+                
             st.markdown(render_wind_rose_svg(wind_dir_deg), unsafe_allow_html=True)
 
         with m2:
