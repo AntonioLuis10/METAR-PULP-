@@ -41,8 +41,8 @@ def fetch_open_meteo_dataset(lat: float, lon: float, elevation: float) -> dict:
         f"&wind_speed_unit=kn&forecast_days=2"
     )
     req = urllib.request.Request(url, headers={'User-Agent': 'AeroWeatherWeb/1.0'})
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read().decode('utf-8'))
+    with urllib.request.urlopen(req, timeout=15) as response:
+        return json.loads(response.read().decode('utf-8'))
 
 def calculate_qnh_doc9837(surface_pressure_hpa: float, elevation_m: float) -> int:
     factor = 1.0 - (0.0065 * elevation_m) / 288.15
@@ -95,6 +95,48 @@ def format_visibility(meters: float) -> str:
         v = (v // 1000) * 1000
     return f"{v:04d}"
 
+def get_cardinal(deg: float) -> str:
+    """Convierte grados en rumbo cardinal en español."""
+    dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+            "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"]
+    idx = int(round(deg / 22.5)) % 16
+    return dirs[idx]
+
+def render_wind_rose_svg(deg: float) -> str:
+    """
+    Genera un componente visual SVG con una rosa de los vientos.
+    El punto rojo en el perímetro muestra de dónde viene el viento,
+    y la flecha señala el sentido del flujo a través del centro.
+    """
+    cardinal = get_cardinal(deg)
+    return f"""
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 6px;">
+        <svg width="105" height="105" viewBox="0 0 120 120" style="filter: drop-shadow(0 2px 5px rgba(0,0,0,0.12));">
+            <!-- Círculo base del dial -->
+            <circle cx="60" cy="60" r="52" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2.5" />
+            <circle cx="60" cy="60" r="42" fill="none" stroke="#e2e8f0" stroke-width="1.2" stroke-dasharray="2 3" />
+            
+            <!-- Marcas cardinales -->
+            <text x="60" y="16" text-anchor="middle" font-size="11" font-weight="bold" fill="#ef4444" font-family="sans-serif">N</text>
+            <text x="109" y="64" text-anchor="middle" font-size="10" font-weight="bold" fill="#64748b" font-family="sans-serif">E</text>
+            <text x="60" y="111" text-anchor="middle" font-size="10" font-weight="bold" fill="#64748b" font-family="sans-serif">S</text>
+            <text x="12" y="64" text-anchor="middle" font-size="10" font-weight="bold" fill="#64748b" font-family="sans-serif">O</text>
+            
+            <!-- Flecha orientada según el ángulo del viento -->
+            <g transform="rotate({deg}, 60, 60)">
+                <!-- Línea de trayectoria del flujo -->
+                <line x1="60" y1="20" x2="60" y2="92" stroke="#0284c7" stroke-width="3" stroke-linecap="round" />
+                <!-- Punta de la flecha indicando el sentido hacia donde sopla -->
+                <polygon points="60,100 54,86 66,86" fill="#0284c7" />
+                <!-- Punto en el perímetro indicando el origen del viento -->
+                <circle cx="60" cy="20" r="4.5" fill="#ef4444" />
+            </g>
+            <circle cx="60" cy="60" r="3.5" fill="#0f172a" />
+        </svg>
+        <span style="font-size: 12px; font-weight: 600; color: #475569; margin-top: 4px;">{int(round(deg))}° ({cardinal})</span>
+    </div>
+    """
+
 def build_metar(dataset: dict, elevation: float) -> str:
     current = dataset["current"]
     time_stamp = datetime.now(timezone.utc).strftime("%d%H%MZ")
@@ -108,7 +150,7 @@ def build_metar(dataset: dict, elevation: float) -> str:
     elif w_gst >= w_spd + 10:
         wind = f"{w_dir:03d}{w_spd:02d}G{w_gst:02d}KT"
     else:
-        wind = f"{w_dir:03d}{w_spd:02d}KT"
+        wind = f"{w_dir:03d}{wind_spd:02d}KT"
         
     t, td = current["temperature_2m"], current["dew_point_2m"]
     wx = map_wmo_to_icao(current["weather_code"])
@@ -151,8 +193,8 @@ def build_taf(dataset: dict) -> str:
     
     lines = [f"TAF {PSEUDO_ICAO} {issue_header} {val_start}/{val_end} {b_dir:03d}{b_spd:02d}KT {b_vis}"]
     if b_wx:
-        lines[0] += f" {b_wx}"
-    lines[0] += f" {b_cloud}"
+        lines[0] += f" {base_wx}"
+    lines[0] += f" {base_cloud}"
     
     for offset in range(3, 24, 3):
         step = start_idx + offset
@@ -184,7 +226,8 @@ st.caption("Generador meteorológico aeronáutico para localidades sin aeropuert
 
 col1, col2 = st.columns([3, 1])
 with col1:
-    ciudad = st.text_input("Municipio o pueblo:", value="Vera", placeholder="Ej: Vera, Cazorla, Ronda...")
+    # 1. Municipio por defecto: Pulpí
+    ciudad = st.text_input("Municipio o pueblo:", value="Pulpí", placeholder="Ej: Pulpí, Vera, Cazorla...")
 with col2:
     buscar = st.button("Consultar", use_container_width=True, type="primary")
 
@@ -198,15 +241,31 @@ if ciudad:
 
         st.success(f"📍 **{label}** | Lat: `{lat:.3f}` | Lon: `{lon:.3f}` | Elev: `{elev:.0f} m MSL`")
 
-        # Tarjetas de resumen rápido
         cur = data["current"]
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Viento", f"{int(cur['wind_direction_10m'])}° a {int(round(cur['wind_speed_10m']))} kt")
-        m2.metric("Temperatura", f"{round(cur['temperature_2m'])}°C", f"Pto. Rocío {round(cur['dew_point_2m'])}°C", delta_color="off")
-        m3.metric("QNH", f"{calculate_qnh_doc9837(cur['surface_pressure'], elev)} hPa")
-        m4.metric("Nubes", f"{cur['cloud_cover']}%")
+        w_spd = int(round(cur["wind_speed_10m"]))
+        w_dir = float(cur["wind_direction_10m"])
+        t_val = round(cur["temperature_2m"])
+        td_val = round(cur["dew_point_2m"])
 
-        # Visualización de códigos aeronáuticos
+        # Fila de métricas
+        m1, m2, m3, m4 = st.columns(4)
+        
+        with m1:
+            # Viento + Rosa de los vientos interactiva debajo
+            st.metric("Viento", f"{w_spd} kt")
+            st.markdown(render_wind_rose_svg(w_dir), unsafe_allow_html=True)
+
+        with m2:
+            # 2. Temperatura y punto de rocío juntos (ej: 26°C / 20°C)
+            st.metric("Temp / Rocío", f"{t_val}°C / {td_val}°C")
+
+        with m3:
+            st.metric("QNH", f"{calculate_qnh_doc9837(cur['surface_pressure'], elev)} hPa")
+
+        with m4:
+            st.metric("Nubes", f"{cur['cloud_cover']}%")
+
+        # Códigos aeronáuticos oficiales
         st.subheader("Informe METAR")
         st.code(metar_txt, language="plaintext")
 
