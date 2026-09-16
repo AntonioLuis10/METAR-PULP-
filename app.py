@@ -265,7 +265,6 @@ if ciudad:
         m1, m2, m3, m4 = st.columns(4)
         
         with m1:
-            # Selector de unidad (kt / km/h)
             unidad_viento = st.radio(
                 "Unidad",
                 options=["kt", "km/h"],
@@ -294,6 +293,52 @@ if ciudad:
 
         st.subheader("Pronóstico TAF (24 Horas)")
         st.code(taf_txt, language="plaintext")
+
+        # --- LEYENDA Y GUÍA DE SÍMBOLOS AERONÁUTICOS ---
+        with st.expander("📖 Guía y Leyenda de Símbolos OACI (METAR & TAF)", expanded=False):
+            st.markdown("""
+            ### 1. Estructura y Cabecera
+            * **METAR / TAF**: Informe de observación ordinaria / Pronóstico de terminal de aeródromo.
+            * **ZZZZ**: Identificador OACI no asignado (indica estación sintética/local sin aeropuerto).
+            * **`DDHHMMZ`**: Día del mes (`DD`), hora (`HH`) y minutos (`MM`) en horario universal coordinado (**UTC / Zulú**).
+            * **AUTO**: Observación totalmente automatizada sin intervención de un observador humano.
+
+            ### 2. Cinemática del Viento
+            * **`dddffKT`**: Dirección de procedencia en grados verdaderos redondeados a la decena (`ddd`) y velocidad en nudos (`ff`).
+            * **`00000KT`**: Viento en calma (inferior a 1 nudo).
+            * **`...G..KT`**: Racha de viento (*Gust*). Indica la velocidad máxima observada si supera la media en 10 kt o más.
+
+            ### 3. Visibilidad Horizontal y Régimen CAVOK
+            * **`9999`**: Visibilidad horizontal igual o superior a 10 km.
+            * **`0000`**: Visibilidad extrema inferior a 50 metros.
+            * **`CAVOK`** (*Ceiling And Visibility OK*): Sustituye visibilidad, tiempo presente y nubes cuando concurrentemente hay $\ge 10\text{ km}$ de visibilidad, sin nubes por debajo de 5000 ft AGL y sin fenómenos significativos.
+
+            ### 4. Fenómenos Meteorológicos y Precipitaciones
+            * **Intensidad**: `-` (Ligera/Débil), *Sin signo* (Moderada), `+` (Fuerte/Severa).
+            * **Descriptores**: `SH` (Chubascos convectivos), `FZ` (Engelante / sobreenfriado), `TS` (Tormenta eléctrica).
+            * **Hidrometeoros**: `RA` (Lluvia), `DZ` (Llovizna), `SN` (Nieve), `SG` (Cinarra o granos de nieve), `GR` (Granizo grueso).
+            * **Litometeoros / Visibilidad reducida**: `FG` (Niebla, visibilidad $< 1000\text{ m}$), `BR` (Neblina), `HZ` (Calima).
+            * *Ejemplos combinados*: `-RA` (Lluvia débil), `TSRA` (Tormenta con lluvia), `+SHSN` (Chubasco de nieve fuerte).
+
+            ### 5. Cobertura y Techo de Nubes (Octas)
+            * **NSC**: *Nil Significant Clouds* (sin nubes operativamente significativas por debajo de 5000 ft).
+            * **FEW**: Escasa (1 a 2 octas de cielo cubierto).
+            * **SCT**: Dispersa (3 a 4 octas).
+            * **BKN**: Fragmentada (5 a 7 octas). **Constituye legalmente techo de nubes operativo**.
+            * **OVC**: Cubierto total (8 octas).
+            * **Cifras de altitud**: Los 3 dígitos tras el código indican la base en centenares de pies sobre el terreno (**AGL**).  
+              *(Ejemplo: `BKN024` = Techo fragmentado a 2400 ft sobre el suelo).*
+
+            ### 6. Parámetros Termodinámicos y Altimetría
+            * **`TT/TdTd`**: Temperatura ambiental (`TT`) y punto de rocío (`TdTd`) en grados Celsius. La letra `M` indica signo negativo *(ejemplo: `M02/M05` = $-2^\circ\text{C}$ / $-5^\circ\text{C}$)*.
+            * **`Qxxxx`**: Presión barométrica **QNH** reducida al nivel del mar bajo la atmósfera ISA expresada en hectopascales (hPa).
+
+            ### 7. Grupos de Evolución en Pronósticos TAF
+            * **`YYG1G1/YYG2G2`**: Periodo de validez (Día/Hora inicio a Día/Hora fin en UTC).
+            * **TEMPO**: Modificaciones transitorias con duración individual inferior a 60 minutos y acumulada menor al 50% del intervalo.
+            * **PROB30 / PROB40**: Probabilidad de ocurrencia del fenómeno del 30% o 40%.
+            * **RMK**: *Remarks* (Observaciones complementarias y advertencia de uso no oficial).
+            """)
 
     except Exception as e:
         st.error(f"Error al procesar la solicitud: {e}")
