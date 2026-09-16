@@ -202,7 +202,7 @@ if ciudad:
         cur = data["current"]
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Viento", f"{int(cur['wind_direction_10m'])}° a {int(round(cur['wind_speed_10m']))} kt")
-m2.metric("Temperatura", f"{round(cur['temperature_2m'])}°C", f"Pto. Rocío {round(cur['dew_point_2m'])}°C", delta_color="off")
+        m2.metric("Temperatura", f"{round(cur['temperature_2m'])}°C", f"Pto. Rocío {round(cur['dew_point_2m'])}°C", delta_color="off")
         m3.metric("QNH", f"{calculate_qnh_doc9837(cur['surface_pressure'], elev)} hPa")
         m4.metric("Nubes", f"{cur['cloud_cover']}%")
 
